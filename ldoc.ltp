@@ -188,8 +188,10 @@ declare module '$(module.name)' {
 # end
 # local iter = ldoc.modules.iter
 # for kind, items in module.kinds() do
-# if kind ~= 'Functions' then
-# else
+# local is_class = kind:sub(1,5) == 'Class'
+# if is_class then
+export class $(kind:sub(6):gsub("%s+", "")) {
+# end
 #   for item in items() do
 #     local desc = ldoc.descript(item):gsub("\n", "\n    * ")
   /**
@@ -224,7 +226,7 @@ declare module '$(module.name)' {
     * @since $(since)
 #   end
     */
-  export function $(item.name)(
+  $(is_class and '' or 'export function ')$(is_class and item.name:match('%.(.+)') or item.name)(
 #   for parm in iter(item.params) do
 #     local param,sublist = item:subparam(parm)
 #     for p in iter(param) do
@@ -234,7 +236,10 @@ declare module '$(module.name)' {
 #   end -- for
   ): $(item.retgroups and retgroup_to_ts(item.retgroups) or 'void');
 #   end
-# end -- if kind
+# if is_class then
+}
+
+# end
 # end -- for module
 }
 # elseif ldoc.modules then -- if module
