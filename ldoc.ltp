@@ -124,7 +124,7 @@
 declare namespace $(module.name) {
 # else
 declare module '$(module.name)' {
-# end 
+# end
 # local iter = ldoc.modules.iter
 # for kind, items in module.kinds() do
 # if kind ~= 'Functions' then
@@ -139,7 +139,7 @@ declare module '$(module.name)' {
 #     end
 #     for p in iter(param) do
 #        local name,tp,def = item:display_name_of(p), item:type_of_param(p), item:default_of_param(p)
-    * @param $(name) $(item.params.map[p]:gsub("\n", "\n    * "))
+    * @param $(name)$(item.params.map[p]:gsub("\n", "\n    * "))
 #     end
 #     if sublist then
 #     end
