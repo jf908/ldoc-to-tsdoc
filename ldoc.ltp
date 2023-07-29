@@ -1,0 +1,183 @@
+# -- Set this to true when you want to generate types as globals instead of modules
+# local as_globals = false
+#
+# function lua_to_ts(type)
+#   local result = ''
+#   for t in type:gmatch('([^|]+)') do
+#     if result ~= '' then
+#       result = result .. ' | '
+#     end
+#     result = result .. lua_to_ts_inner(t)
+#   end
+#   return result
+# end
+#
+# function lua_to_ts_inner(t)
+#   if t == 'nil' then
+#     return 'null'
+#   elseif t == 'int' then
+#     return 'number'
+#   elseif t == 'bool' then
+#     return 'boolean'
+#   elseif t == 'func' then
+#     return '(...x: any[]) => any'
+#   elseif t == 'tab' or t == 'table' then
+#     return 'object'
+#   end
+#
+#   if t:sub(1, 1) == '{' then
+#     if t:sub(-5) == ",...}" then
+#       local equals = t:find('=')
+#       -- Map
+#       if equals == nil then
+#         return lua_to_ts_inner(t:sub(2, -6)) .. '[]'
+#       end
+#
+#       -- Array
+#       return '{[x: ' .. lua_to_ts_inner(t:sub(3, equals - 2)) .. ']: ' .. lua_to_ts_inner(t:sub(equals + 1, -6)) .. '}'
+#     else
+#       -- Struct
+#       if t:find('=') then
+#         local result = '{'
+#         for el in t:sub(2, -2):gmatch('[^,]+') do
+#           local equals = el:find('=')
+#           if result ~= '{' then
+#             result = result .. el:sub(1, equals - 1) .. ': ' .. lua_to_ts_inner(el:sub(equals + 1))
+#           else
+#             result = result .. el:sub(1, equals - 1) .. ': ' .. lua_to_ts_inner(el:sub(equals + 1)) .. ', '
+#           end
+#         end
+#         return result .. '}'
+#       end
+#
+#       -- Tuple
+#       local result = '['
+#       for el in t:sub(2, -2):gmatch('[^,]+') do
+#         if result ~= '[' then
+#           result = result .. lua_to_ts_inner(el)
+#         else
+#           result = result .. lua_to_ts_inner(el) .. ', '
+#         end
+#       end
+#       return result .. ']'
+#     end
+#   end
+#
+#   return t
+# end
+#
+# function retgroup_to_ts(groups)
+#   if #groups == 0 then
+#     return 'void'
+#   end
+#
+#   local max_group_size = 0
+#   for i, group in ldoc.ipairs(groups) do
+#     if #group > max_group_size then
+#       max_group_size = #group
+#     end
+#   end
+#
+#   if max_group_size == 1 then
+#     local result = ''
+#     for i, group in ldoc.ipairs(groups) do
+#       if i ~= 1 then
+#         result = result .. ' | '
+#       end
+#       for r in group:iter() do
+#         result = result .. lua_to_ts(r.type)
+#       end
+#     end
+#     return result
+#   else
+#     local result = 'LuaMultiReturn<'
+#     for i, group in ldoc.ipairs(groups) do
+#       if i ~= 1 then
+#         result = result .. ' | '
+#       end
+#       result = result .. '['
+#       local first = true
+#       for r in group:iter() do
+#         if not first then
+#           result = result .. ', '
+#         end
+#         first = false
+#         result = result .. lua_to_ts(r.type)
+#       end
+#       result = result .. ']'
+#     end
+#     return result .. '>'
+#   end
+# end
+#
+#
+#
+# if module then
+#
+# if module.summary then
+/**
+  * $(module.summary:gsub("\n", "\n  * "))
+# --  * $(module.description:gsub("\n", "\n  * "))
+  */
+# end -- if module.summary
+# if as_globals then
+declare namespace $(module.name) {
+# else
+declare module '$(module.name)' {
+# end 
+# local iter = ldoc.modules.iter
+# for kind, items in module.kinds() do
+# if kind ~= 'Functions' then
+# else
+#   for item in items() do
+#     local desc = ldoc.descript(item):gsub("\n", "\n    * ")
+  /**
+    * $(desc)
+#   for parm in iter(item.params) do
+#     local param,sublist = item:subparam(parm)
+#     if sublist then
+#     end
+#     for p in iter(param) do
+#        local name,tp,def = item:display_name_of(p), item:type_of_param(p), item:default_of_param(p)
+    * @param $(name) $(item.params.map[p]:gsub("\n", "\n    * "))
+#     end
+#     if sublist then
+#     end
+#   end -- for
+#   if item.retgroups then
+#     local groups = item.retgroups
+#     for i,group in ldoc.ipairs(groups) do
+#       local first = true
+#       for r in group:iter() do
+    * $(first and '@returns' or '        ') $(r.type) - $(r.text)
+#         first = false
+#       end
+#     end -- for group
+#   end -- if item.retgroups
+#   if item.see then
+#     for see in iter(item.see) do
+    * @see $(see.label)
+#     end
+#   end
+#   if item.since then
+    * @since $(since)
+#   end
+    */
+  export function $(item.name)(
+#   for parm in iter(item.params) do
+#     local param,sublist = item:subparam(parm)
+#     for p in iter(param) do
+#        local name,tp,def = item:display_name_of(p), item:type_of_param(p), item:default_of_param(p)
+    $(name)$(def == true and '?' or '')$(tp ~= '' and ': ' .. tp or ''),
+#     end
+#   end -- for
+  ): $(item.retgroups and retgroup_to_ts(item.retgroups) or 'void');
+#   end
+# end -- if kind
+# end -- for module
+}
+# elseif ldoc.modules then -- if module
+# for _, mod in ldoc.ipairs(ldoc.modules) do
+/// <reference path="modules/$(mod.name).d.ts"/>
+# end
+# end -- if module
