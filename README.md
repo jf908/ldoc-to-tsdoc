@@ -67,7 +67,9 @@ ldoc is usually used to generate HTML pages from lua but it is possible to confi
 
 ## Notes
 
-The conversion may not be perfect since it is limited to what is contained in the ldoc syntax so you may have to modify the types to fully make use of TypeScript's type system. Using this template will give you a good starting point regardless.
+The conversion may not be perfect since it is limited to what is contained in the ldoc syntax so you may have to modify the types to fully make use of TypeScript's type system.
+Using this template will give you a good starting point regardless.
+You may also wish to use a formatter like prettier to neaten things up.
 
 By default this template assumes each lua file is a module. You can change it to see files as globals using the `as_globals` flag at the top to false.
 
